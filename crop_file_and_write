@@ -1,0 +1,35 @@
+import numpy as np
+import cv2
+
+img = cv2.imread('./lena.bmp')
+blue = (255, 0 , 0)
+
+
+def crop_event(event,x, y, flags,param):
+    global drag, init_x, init_y
+
+    if event == cv2.EVENT_LBUTTONDOWN:#마우스 왼쪽 누르면 x,y값 저장, drag True
+        drag = True #전역변수 drag True
+        init_x, init_y = x, y
+
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if flags&cv2.EVENT_FLAG_LBUTTON:
+            if drag: #drag True 일때,
+                img_drag = img.copy() #사각형 나오도록 하기 위한 img 복시.
+            cv2.rectangle(img_drag,(init_x,init_y),(x,y),blue, 3 , cv2.LINE_4) #드래그 영역 표시
+            cv2.imshow('image',img_drag)
+
+    elif event == cv2.EVENT_LBUTTONUP:
+        if drag:
+            drag = False #버튼을 떼면 drag 멈춤
+            img_crop = img[init_x :x,init_y:y].copy()
+            cv2.imshow('image_crop',img_crop)
+            cv2.imwrite('./crop_image.bmp', img_crop)
+
+cv2.namedWindow('image')
+cv2.setMouseCallback('image', crop_event , img)
+
+cv2.imshow('image',img)
+cv2.waitKey()
+cv2.destroyAllWindows()
+
