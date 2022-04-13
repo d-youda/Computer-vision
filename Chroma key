@@ -1,0 +1,57 @@
+import cv2
+
+# 녹색 배경 동영상
+cap1 = cv2.VideoCapture('chromakey_sample.mp4')
+if not cap1.isOpened():
+    print('video open failed!')
+
+# 합성 대상 동영상
+cap2 = cv2.VideoCapture('video1.mp4')
+if not cap2.isOpened():
+    print('video open failed!')
+
+frame_cnt1 = round(cap1.get(cv2.CAP_PROP_FRAME_COUNT))
+frame_cnt2 = round(cap2.get(cv2.CAP_PROP_FRAME_COUNT))
+width = round(cap2.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = round(cap2.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+fps = cap2.get(cv2.CAP_PROP_FPS)
+delay = int(1000 / fps)
+
+fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+out = cv2.VideoWriter('./chroma_out.avi', fourcc, fps, (int(width), int(height)))
+
+while True:
+    ret, frame1 = cap1.read()
+    ret2, frame2 = cap2.read()
+    if not ret:
+        break
+
+    if not ret2:
+        break
+
+    #frame1의 사이즈를 frame2에 맞춰준다.
+    frame1 = cv2.resize(frame1, (1280, 720))
+
+    #frame1에서 녹색 영역을 검출한다.
+    hsv = cv2.cvtColor(frame1, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, (50, 150, 0), (70, 255, 255))
+
+    #녹색 영역 검출 영상의 채널을 3개로 다시 맞춰준다
+    mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+
+    #copyTo함수를 활용하여 녹색 영역 검출 영상과 video1을 합쳐준다.
+    cv2.copyTo(frame2, mask, frame1)
+
+    #최종 영상 확인
+    cv2.imshow('Project', frame1)
+
+    #동영상 저장
+    out.write(frame1)
+
+    #esc 누를 경우, 영상 끔(무한 루프 탈출)
+    if cv2.waitKey(delay) == 27:
+        break
+
+cap1.release()
+cv2.destroyAllWindows()
